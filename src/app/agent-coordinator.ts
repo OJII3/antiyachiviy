@@ -1,6 +1,7 @@
 import type { Logger } from "pino";
 
 import type { DiscordMessage } from "@modules/discord/domain/discord-message";
+import type { DiscordOperatingState } from "@modules/discord/domain/discord-operating-state";
 import type { DiscordService } from "@modules/discord/ports/discord-service";
 import { DiscordAgent } from "@agents/discord/discord-agent";
 import type { TaskCoordinator } from "./task-coordinator";
@@ -9,6 +10,7 @@ export interface AgentCoordinatorDependencies {
   readonly discordService: DiscordService;
   readonly createDiscordAgent: (channelId: string) => Promise<DiscordAgent>;
   readonly logger: Logger;
+  readonly operatingState: DiscordOperatingState;
   readonly taskCoordinator: TaskCoordinator;
 }
 
@@ -21,6 +23,8 @@ export class AgentCoordinator {
   }
 
   handleDiscordMessage(message: DiscordMessage): Promise<void> {
+    if (!this.dependencies.operatingState.isActive()) return Promise.resolve();
+
     return this.dependencies.taskCoordinator.run(() => this.processMessage(message));
   }
 
@@ -41,6 +45,8 @@ export class AgentCoordinator {
   }
 
   private async processMessage(message: DiscordMessage): Promise<void> {
+    if (!this.dependencies.operatingState.isActive()) return;
+
     const logger = this.logger.child({
       channelId: message.channelId,
       messageId: message.id,

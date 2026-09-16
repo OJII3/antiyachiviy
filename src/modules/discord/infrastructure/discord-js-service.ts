@@ -4,7 +4,9 @@ import {
   Events,
   GatewayIntentBits,
   Partials,
+  PermissionFlagsBits,
   type Attachment,
+  type ApplicationCommandDataResolvable,
   type ChatInputCommandInteraction,
   type Interaction,
   type Message,
@@ -12,6 +14,10 @@ import {
 import type { Logger } from "pino";
 
 import type { DiscordAccessPolicy } from "../domain/discord-access-policy";
+import {
+  DiscordOperatingState,
+  type DiscordOperatingMode,
+} from "../domain/discord-operating-state";
 import {
   resolveDiscordMentions,
   type DiscordImageAttachment,
@@ -38,9 +44,24 @@ const DISCORD_IMAGE_FETCH_TIMEOUT_MS = 15_000;
 const DISCORD_IMAGE_MIME_TYPES = new Set(["image/gif", "image/jpeg", "image/png", "image/webp"]);
 const DEFAULT_ANTIGRAVITY_COMMAND = "agy";
 const DEFAULT_WEEKLY_USAGE_REFRESH_INTERVAL_MS = 5 * 60 * 1_000;
+const OPERATING_MODE_COMMANDS: readonly ApplicationCommandDataResolvable[] = [
+  {
+    name: "idle",
+    description: "Botを一時停止します",
+    defaultMemberPermissions: PermissionFlagsBits.ManageGuild,
+    dmPermission: false,
+  },
+  {
+    name: "online",
+    description: "Botを再開します",
+    defaultMemberPermissions: PermissionFlagsBits.ManageGuild,
+    dmPermission: false,
+  },
+];
 
 export interface DiscordJsServiceOptions {
   readonly antigravityCommand?: string;
+  readonly operatingState?: DiscordOperatingState;
   readonly weeklyUsageProvider?: WeeklyUsageProvider;
   readonly weeklyUsageRefreshIntervalMs?: number;
 }
@@ -151,6 +172,7 @@ export class DiscordJsService implements DiscordService {
   private readonly logger?: Logger;
   private readonly weeklyUsageProvider: WeeklyUsageProvider;
   private readonly weeklyUsageRefreshIntervalMs: number;
+  private readonly operatingState: DiscordOperatingState;
   private weeklyUsageRefreshTimer?: ReturnType<typeof setInterval>;
   private weeklyUsageRefreshInFlight?: Promise<void>;
   private weeklyUsageRefreshEnabled = false;
@@ -167,6 +189,7 @@ export class DiscordJsService implements DiscordService {
       createAntigravityUsageProvider(options.antigravityCommand ?? DEFAULT_ANTIGRAVITY_COMMAND);
     this.weeklyUsageRefreshIntervalMs =
       options.weeklyUsageRefreshIntervalMs ?? DEFAULT_WEEKLY_USAGE_REFRESH_INTERVAL_MS;
+    this.operatingState = options.operatingState ?? new DiscordOperatingState();
     this.client = new Client({
       intents: [
         GatewayIntentBits.DirectMessages,
@@ -186,6 +209,7 @@ export class DiscordJsService implements DiscordService {
     this.onSlashCommand = onSlashCommand;
     this.acceptingMessages = true;
     this.client.once(Events.ClientReady, (readyClient) => {
+      this.applyOperatingModePresence();
       this.logger?.info(
         {
           event: "discord_client_ready",
@@ -194,6 +218,19 @@ export class DiscordJsService implements DiscordService {
         "Discord client is ready",
       );
       this.startWeeklyUsageRefresh();
+      void this.synchronizeCommands(readyClient)
+        .then(() => {
+          this.logger?.info(
+            { event: "discord_commands_synchronized" },
+            "Synchronized Discord commands",
+          );
+        })
+        .catch((error: unknown) => {
+          this.logger?.error(
+            { err: error, event: "discord_commands_synchronization_failed" },
+            "Failed to synchronize Discord commands",
+          );
+        });
     });
     this.messageListener = (message) => {
       void this.handleMessage(message).catch((error: unknown) => {
@@ -204,17 +241,15 @@ export class DiscordJsService implements DiscordService {
       });
     };
     this.client.on(Events.MessageCreate, this.messageListener);
-    if (onSlashCommand) {
-      this.interactionListener = (interaction) => {
-        void this.handleInteraction(interaction).catch((error: unknown) => {
-          this.logger?.error(
-            { err: error, event: "discord_interaction_handler_failed" },
-            "Failed to handle Discord interaction",
-          );
-        });
-      };
-      this.client.on(Events.InteractionCreate, this.interactionListener);
-    }
+    this.interactionListener = (interaction) => {
+      void this.handleInteraction(interaction).catch((error: unknown) => {
+        this.logger?.error(
+          { err: error, event: "discord_interaction_handler_failed" },
+          "Failed to handle Discord interaction",
+        );
+      });
+    };
+    this.client.on(Events.InteractionCreate, this.interactionListener);
 
     await this.client.login(this.token);
   }
@@ -225,6 +260,15 @@ export class DiscordJsService implements DiscordService {
     for (const chunk of splitMessage(content)) {
       await channel.send(chunk);
     }
+  }
+
+  setOperatingMode(mode: DiscordOperatingMode): void {
+    this.operatingState.setMode(mode);
+    this.applyOperatingModePresence();
+    this.logger?.info(
+      { event: "discord_operating_mode_changed", mode },
+      "Changed Discord operating mode",
+    );
   }
 
   async readMessage(locator: DiscordMessageLocator): Promise<DiscordMessage> {
@@ -331,7 +375,7 @@ export class DiscordJsService implements DiscordService {
   }
 
   private async handleMessage(message: Message): Promise<void> {
-    if (!this.acceptingMessages) return;
+    if (!this.canAcceptMessages()) return;
     if (message.author.bot) return;
 
     const content = message.content.trim();
@@ -342,7 +386,7 @@ export class DiscordJsService implements DiscordService {
 
     const normalizedMessage = this.toDiscordMessage(message);
 
-    if (!this.acceptingMessages) return;
+    if (!this.canAcceptMessages()) return;
 
     if (
       !this.accessPolicy.canReceive({
@@ -354,14 +398,14 @@ export class DiscordJsService implements DiscordService {
       return;
     }
 
-    if (!this.acceptingMessages) return;
+    if (!this.canAcceptMessages()) return;
 
     const [images, replyTo] = await Promise.all([
       this.fetchImages(message),
       this.fetchReplyReference(message),
     ]);
 
-    if (!this.acceptingMessages) return;
+    if (!this.canAcceptMessages()) return;
     if (!content && images.length === 0) return;
 
     await this.onMessage?.({
@@ -371,8 +415,33 @@ export class DiscordJsService implements DiscordService {
     });
   }
 
+  private canAcceptMessages(): boolean {
+    return this.acceptingMessages && this.operatingState.isActive();
+  }
+
+  private applyOperatingModePresence(): void {
+    if (!this.client.user) return;
+
+    this.client.user.setStatus(this.operatingState.isActive() ? "online" : "idle");
+  }
+
+  private async synchronizeCommands(readyClient: Client<true>): Promise<void> {
+    await readyClient.application.commands.set(OPERATING_MODE_COMMANDS);
+  }
+
   private async handleInteraction(interaction: Interaction): Promise<void> {
     if (!this.acceptingMessages || !interaction.isChatInputCommand()) return;
+
+    const mode =
+      interaction.commandName === "idle"
+        ? ("paused" as const)
+        : interaction.commandName === "online"
+          ? ("active" as const)
+          : undefined;
+    if (mode) {
+      await this.handleOperatingModeInteraction(interaction, mode);
+      return;
+    }
 
     const channelId = interaction.channelId;
     if (!channelId) {
@@ -437,6 +506,33 @@ export class DiscordJsService implements DiscordService {
         );
       }
     }
+  }
+
+  private async handleOperatingModeInteraction(
+    interaction: ChatInputCommandInteraction,
+    mode: DiscordOperatingMode,
+  ): Promise<void> {
+    if (!interaction.inGuild()) {
+      await interaction.reply({
+        content: "このコマンドはサーバー内でのみ使用できます。",
+        ephemeral: true,
+      });
+      return;
+    }
+
+    if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {
+      await interaction.reply({
+        content: "このコマンドを実行する権限がありません。",
+        ephemeral: true,
+      });
+      return;
+    }
+
+    this.setOperatingMode(mode);
+    await interaction.reply({
+      content: mode === "active" ? "Botを再開しました。" : "Botを一時停止しました。",
+      ephemeral: true,
+    });
   }
 
   private async replyToInteraction(

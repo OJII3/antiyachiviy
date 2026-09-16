@@ -40,3 +40,8 @@ Prompts are based on [tsukumijima/YacchoGPT](https://github.com/tsukumijima/Yacc
 ## Future Developments
 
 Most discord features will follow [Klein](https://github.com/ojii3/klein), but other features will not be added.
+
+Members with the Manage Server permission can use `/idle` to pause new message
+processing and `/online` to resume it. Messages already being processed are
+allowed to finish. The operating mode is kept in memory and starts as active
+after each restart.

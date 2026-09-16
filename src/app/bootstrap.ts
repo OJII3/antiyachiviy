@@ -10,6 +10,7 @@ import { DiscordAgent } from "@agents/discord/discord-agent";
 import { createAntigravityAgentFactory } from "@runtime/antigravity/antigravity-agent-runtime";
 import { DiscordSendMcpGateway } from "@runtime/antigravity/discord-send-mcp-gateway";
 import { createDiscordAccessPolicy } from "@modules/discord/domain/discord-access-policy";
+import { DiscordOperatingState } from "@modules/discord/domain/discord-operating-state";
 import { DiscordJsService } from "@modules/discord/infrastructure/discord-js-service";
 import { resolveLogDirectory, resolveWebUiConfig } from "@modules/webui/domain/webui-config";
 import { startWebUi } from "@modules/webui/infrastructure/elysia-webui-app";
@@ -28,11 +29,12 @@ export async function bootstrap(): Promise<void> {
   if (!token) {
     throw new Error("DISCORD_BOT_TOKEN is required");
   }
+  const discordOperatingState = new DiscordOperatingState();
   const discordService = new DiscordJsService(
     token,
     createDiscordAccessPolicy(config.discord.access),
     logger,
-    { antigravityCommand: config.llm.command },
+    { antigravityCommand: config.llm.command, operatingState: discordOperatingState },
   );
   const discordSendGateway = new DiscordSendMcpGateway(discordService, logger);
   await discordSendGateway.start();
@@ -50,6 +52,7 @@ export async function bootstrap(): Promise<void> {
       DiscordAgent.create(antigravityAgentFactory, discordService, channelId, systemPrompt),
     discordService,
     logger,
+    operatingState: discordOperatingState,
     taskCoordinator,
   });
   const webUiConfig = resolveWebUiConfig(config);
