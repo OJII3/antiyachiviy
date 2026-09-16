@@ -4,18 +4,24 @@ import type { Interaction, Message } from "discord.js";
 
 import { createDiscordAccessPolicy } from "../domain/discord-access-policy";
 import type { DiscordMessage } from "../domain/discord-message";
+import { DiscordOperatingState } from "../domain/discord-operating-state";
 import type { DiscordMessageHandler, DiscordSlashCommandHandler } from "../ports/discord-service";
 import { DiscordJsService } from "./discord-js-service";
 
 type TestableDiscordJsService = {
   readonly client: {
-    user: { id: string; setActivity?: (...args: unknown[]) => unknown } | null;
+    user: {
+      id: string;
+      setActivity?: (...args: unknown[]) => unknown;
+      setStatus?: (status: "online" | "idle") => void;
+    } | null;
   };
   acceptingMessages: boolean;
   onMessage?: DiscordMessageHandler;
   onSlashCommand?: DiscordSlashCommandHandler;
   handleMessage(message: Message): Promise<void>;
   handleInteraction(interaction: Interaction): Promise<void>;
+  synchronizeCommands(readyClient: unknown): Promise<void>;
   startWeeklyUsageRefresh(): void;
   stopWeeklyUsageRefresh(): void;
 };
@@ -227,6 +233,143 @@ test("updates the Discord activity with weekly usage", async () => {
     assert.deepEqual(activities, ["--%/week (reset in -- days)", "73%/week (reset in 2 days)"]);
   } finally {
     testableService.stopWeeklyUsageRefresh();
+    await service.stop();
+  }
+});
+
+test("pauses message handling while the bot is idle", async () => {
+  const operatingState = new DiscordOperatingState();
+  const service = new DiscordJsService(
+    "token",
+    createDiscordAccessPolicy({ default: "allow", directMessages: "allow" }),
+    undefined,
+    { operatingState },
+  );
+  const testableService = service as unknown as TestableDiscordJsService;
+  testableService.client.user = { id: "bot-123", setStatus: () => undefined };
+  testableService.acceptingMessages = true;
+
+  const received: DiscordMessage[] = [];
+  testableService.onMessage = async (message) => {
+    received.push(message);
+  };
+
+  try {
+    service.setOperatingMode("paused");
+    await testableService.handleMessage(createMessage());
+
+    assert.equal(operatingState.mode, "paused");
+    assert.equal(received.length, 0);
+  } finally {
+    await service.stop();
+  }
+});
+
+test("changes the Discord presence when the operating mode changes", async () => {
+  const operatingState = new DiscordOperatingState();
+  const statuses: string[] = [];
+  const service = new DiscordJsService(
+    "token",
+    createDiscordAccessPolicy({ default: "allow", directMessages: "allow" }),
+    undefined,
+    { operatingState },
+  );
+  const testableService = service as unknown as TestableDiscordJsService;
+  testableService.client.user = {
+    id: "bot-123",
+    setStatus: (status) => statuses.push(status),
+  };
+
+  try {
+    service.setOperatingMode("paused");
+    service.setOperatingMode("active");
+
+    assert.deepEqual(statuses, ["idle", "online"]);
+    assert.equal(operatingState.mode, "active");
+  } finally {
+    await service.stop();
+  }
+});
+
+test("handles idle and online slash commands for members with Manage Server", async () => {
+  const operatingState = new DiscordOperatingState();
+  const service = new DiscordJsService(
+    "token",
+    createDiscordAccessPolicy({ default: "allow", directMessages: "allow" }),
+    undefined,
+    { operatingState },
+  );
+  const testableService = service as unknown as TestableDiscordJsService;
+  testableService.client.user = {
+    id: "bot-123",
+    setStatus: () => undefined,
+  };
+  testableService.acceptingMessages = true;
+
+  const replies: Array<{ content: string; ephemeral: boolean }> = [];
+  const interaction = {
+    commandName: "idle",
+    inGuild: () => true,
+    isChatInputCommand: () => true,
+    memberPermissions: {
+      has: () => true,
+    },
+    reply: async (response: { content: string; ephemeral: boolean }) => {
+      replies.push(response);
+    },
+  } as unknown as Interaction;
+
+  try {
+    await testableService.handleInteraction(interaction);
+    assert.equal(operatingState.mode, "paused");
+    assert.deepEqual(replies, [{ content: "Botを一時停止しました。", ephemeral: true }]);
+
+    (interaction as { commandName: string }).commandName = "online";
+    await testableService.handleInteraction(interaction);
+    assert.equal(operatingState.mode, "active");
+    assert.deepEqual(replies, [
+      { content: "Botを一時停止しました。", ephemeral: true },
+      { content: "Botを再開しました。", ephemeral: true },
+    ]);
+  } finally {
+    await service.stop();
+  }
+});
+
+test("registers the operating mode slash commands", async () => {
+  const service = new DiscordJsService(
+    "token",
+    createDiscordAccessPolicy({ default: "allow", directMessages: "allow" }),
+  );
+  const testableService = service as unknown as TestableDiscordJsService;
+  let registeredCommands: unknown;
+
+  try {
+    await testableService.synchronizeCommands({
+      application: {
+        commands: {
+          set: async (commands: unknown) => {
+            registeredCommands = commands;
+          },
+        },
+      },
+    });
+
+    assert.deepEqual(registeredCommands, [
+      {
+        name: "idle",
+        description: "Botを一時停止します",
+        defaultMemberPermissions: 32n,
+        dmPermission: false,
+      },
+      {
+        name: "online",
+        description: "Botを再開します",
+        defaultMemberPermissions: 32n,
+        dmPermission: false,
+      },
+    ]);
+  } finally {
     await service.stop();
   }
 });
