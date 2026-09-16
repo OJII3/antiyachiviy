@@ -6,7 +6,11 @@
     "noEmit": true,
     "rootDir": "..",
     "paths": {
-      "@yachigravity/webui/*": ["./../src/modules/webui/*"]
+      "@agents/*": ["./../src/agents/*"],
+      "@app/*": ["./../src/app/*"],
+      "@modules/*": ["./../src/modules/*"],
+      "@runtime/*": ["./../src/runtime/*"],
+      "@web/*": ["./src/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"]

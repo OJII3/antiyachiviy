@@ -1,6 +1,6 @@
 import { treaty } from "@elysia/eden";
 
-import type { WebUiApp } from "@yachigravity/webui/infrastructure/elysia-webui-app.js";
+import type { WebUiApp } from "@modules/webui/infrastructure/elysia-webui-app";
 
 export interface PinoLog {
   source: "pino";

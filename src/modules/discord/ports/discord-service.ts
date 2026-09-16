@@ -1,8 +1,4 @@
-import type {
-  DiscordMessage,
-  DiscordMessageLocator,
-  DiscordUser,
-} from "../domain/discord-message.js";
+import type { DiscordMessage, DiscordMessageLocator, DiscordUser } from "../domain/discord-message";
 
 export interface DiscordSlashCommandDefinition {
   readonly name: string;

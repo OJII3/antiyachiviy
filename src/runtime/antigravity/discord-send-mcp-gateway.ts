@@ -3,7 +3,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import type { AddressInfo } from "node:net";
 import type { Logger } from "pino";
 
-import type { DiscordService } from "../../modules/discord/ports/discord-service.js";
+import type { DiscordService } from "@modules/discord/ports/discord-service";
 
 const MAX_BODY_BYTES = 64 * 1024;
 const ROUTE = "/discord-send";

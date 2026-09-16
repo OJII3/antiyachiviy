@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { formatTimestamp } from "../lib/format.js";
+import { formatTimestamp } from "@web/lib/format";
 
 export type View = "logs" | "sessions";
 

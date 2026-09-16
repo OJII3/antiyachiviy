@@ -4,8 +4,8 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import test from "node:test";
 
-import { AntigravitySessionReader } from "./antigravity-session-reader.js";
-import { openSession, writeSession } from "../../../runtime/antigravity/session-store.js";
+import { AntigravitySessionReader } from "./antigravity-session-reader";
+import { openSession, writeSession } from "@runtime/antigravity/session-store";
 
 test("lists and reads Antigravity sessions without image data", async () => {
   const directory = await mkdtemp(join(tmpdir(), "yachigravity-session-reader-"));

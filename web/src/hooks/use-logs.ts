@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { listLogs, type LogsQuery, type PinoLog } from "../api.js";
+import { listLogs, type LogsQuery, type PinoLog } from "@web/api";
 
 interface UseLogsOptions {
   active: boolean;

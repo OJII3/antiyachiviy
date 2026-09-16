@@ -1,7 +1,7 @@
 import { collapseAllNested, darkStyles, JsonView } from "react-json-view-lite";
 import "react-json-view-lite/dist/index.css";
 
-import { isJsonContainer, stringify } from "../lib/format.js";
+import { isJsonContainer, stringify } from "@web/lib/format";
 
 interface JsonValueProps {
   value: unknown;

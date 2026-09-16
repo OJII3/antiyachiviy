@@ -4,7 +4,7 @@ import test from "node:test";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-import { loadPromptFile } from "./prompt.js";
+import { loadPromptFile } from "./prompt";
 
 test("loads and trims an external system prompt", async () => {
   const directory = await mkdtemp(join(tmpdir(), "klein-prompt-"));

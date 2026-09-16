@@ -1,7 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 
-import type { PinoViewerEvent, ViewerPage } from "../domain/viewer-event.js";
+import type { PinoViewerEvent, ViewerPage } from "../domain/viewer-event";
 
 const PinoLevelLabels: Readonly<Record<number, string>> = {
   10: "trace",

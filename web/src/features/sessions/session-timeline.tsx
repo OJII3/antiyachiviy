@@ -1,7 +1,7 @@
-import type { AntigravitySessionEvent, SessionSummary } from "../../api.js";
-import { EmptyState } from "../../components/feedback.js";
-import { JsonValue } from "../../components/json-value.js";
-import { formatTimestamp } from "../../lib/format.js";
+import type { AntigravitySessionEvent, SessionSummary } from "@web/api";
+import { EmptyState } from "@web/components/feedback";
+import { JsonValue } from "@web/components/json-value";
+import { formatTimestamp } from "@web/lib/format";
 
 interface SessionTimelineProps {
   events: AntigravitySessionEvent[];

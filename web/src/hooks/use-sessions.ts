@@ -5,7 +5,7 @@ import {
   listSessions,
   type AntigravitySessionEvent,
   type SessionSummary,
-} from "../api.js";
+} from "@web/api";
 
 interface UseSessionsOptions {
   active: boolean;

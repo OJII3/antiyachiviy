@@ -6,8 +6,8 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { once } from "node:events";
 
-import { createLogger } from "../../app/logger.js";
-import { DiscordSendMcpGateway } from "./discord-send-mcp-gateway.js";
+import { createLogger } from "@app/logger";
+import { DiscordSendMcpGateway } from "./discord-send-mcp-gateway";
 
 test("routes discord_send requests to the registered channel", async () => {
   const sent: { channelId: string; content: string }[] = [];

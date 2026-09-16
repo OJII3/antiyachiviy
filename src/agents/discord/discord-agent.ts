@@ -1,10 +1,7 @@
-import type { AgentFactory } from "../core/agent-factory.js";
-import type { AgentRuntime } from "../core/agent-runtime.js";
-import {
-  formatDiscordMessage,
-  type DiscordMessage,
-} from "../../modules/discord/domain/discord-message.js";
-import type { DiscordService } from "../../modules/discord/ports/discord-service.js";
+import type { AgentFactory } from "@agents/core/agent-factory";
+import type { AgentRuntime } from "@agents/core/agent-runtime";
+import { formatDiscordMessage, type DiscordMessage } from "@modules/discord/domain/discord-message";
+import type { DiscordService } from "@modules/discord/ports/discord-service";
 
 export class DiscordAgent {
   static async create(

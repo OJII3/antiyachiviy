@@ -4,7 +4,7 @@ import test from "node:test";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-import { createLogFilePath, createLogger, flushLogger } from "./logger.js";
+import { createLogFilePath, createLogger, flushLogger } from "./logger";
 
 test("redacts sensitive top-level fields", () => {
   const lines: string[] = [];

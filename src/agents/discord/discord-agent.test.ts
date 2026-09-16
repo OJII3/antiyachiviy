@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { DiscordAgent } from "./discord-agent.js";
-import type { AgentFactory } from "../core/agent-factory.js";
-import type { DiscordMessage } from "../../modules/discord/domain/discord-message.js";
-import type { DiscordService } from "../../modules/discord/ports/discord-service.js";
+import { DiscordAgent } from "./discord-agent";
+import type { AgentFactory } from "@agents/core/agent-factory";
+import type { DiscordMessage } from "@modules/discord/domain/discord-message";
+import type { DiscordService } from "@modules/discord/ports/discord-service";
 
 const message: DiscordMessage = {
   author: { displayName: "さつき", id: "user-1", username: "satsuki" },

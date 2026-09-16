@@ -1,8 +1,8 @@
 import { Fragment } from "react";
 
-import type { PinoLog } from "../../api.js";
-import { formatTimestamp, levelClass, levelLabel } from "../../lib/format.js";
-import { LogDetails } from "./log-details.js";
+import type { PinoLog } from "@web/api";
+import { formatTimestamp, levelClass, levelLabel } from "@web/lib/format";
+import { LogDetails } from "@web/features/logs/log-details";
 
 interface LogTableProps {
   logs: PinoLog[];
