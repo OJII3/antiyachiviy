@@ -27,13 +27,17 @@ type TestableDiscordJsService = {
 };
 
 function createMessage(
-  options: { content?: string; attachments?: Map<string, unknown> } = {},
+  options: {
+    author?: { bot?: boolean; id?: string };
+    content?: string;
+    attachments?: Map<string, unknown>;
+  } = {},
 ): Message {
   return {
     author: {
-      bot: false,
+      bot: options.author?.bot ?? false,
       displayName: "さつき",
-      id: "user-123",
+      id: options.author?.id ?? "user-123",
       username: "satsuki",
     },
     channel: {
@@ -107,6 +111,36 @@ test("forwards guild messages without a bot mention", async () => {
 
     assert.equal(received.length, 1);
     assert.equal(received[0]?.content, "メンションなしのメッセージ");
+  } finally {
+    await service.stop();
+  }
+});
+
+test("ignores only messages sent by this bot", async () => {
+  const service = new DiscordJsService(
+    "token",
+    createDiscordAccessPolicy({ default: "allow", directMessages: "allow" }),
+  );
+  const testableService = service as unknown as TestableDiscordJsService;
+  testableService.client.user = { id: "bot-123" };
+  testableService.acceptingMessages = true;
+
+  const received: DiscordMessage[] = [];
+  testableService.onMessage = async (message) => {
+    received.push(message);
+  };
+
+  try {
+    await testableService.handleMessage(
+      createMessage({ author: { bot: true, id: "bot-123" }, content: "自分の送信メッセージ" }),
+    );
+    await testableService.handleMessage(
+      createMessage({ author: { bot: true, id: "other-bot-456" }, content: "別 bot のメッセージ" }),
+    );
+
+    assert.equal(received.length, 1);
+    assert.equal(received[0]?.author.bot, true);
+    assert.equal(received[0]?.author.id, "other-bot-456");
   } finally {
     await service.stop();
   }

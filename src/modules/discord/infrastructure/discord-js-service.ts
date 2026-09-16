@@ -147,6 +147,7 @@ async function readResponseBytes(response: Response): Promise<Uint8Array> {
 
 function toDiscordUser(message: Message): DiscordUser {
   return {
+    bot: message.author.bot,
     id: message.author.id,
     username: message.author.username,
     displayName: message.member?.displayName ?? message.author.displayName,
@@ -155,6 +156,7 @@ function toDiscordUser(message: Message): DiscordUser {
 
 function toDiscordInteractionUser(interaction: ChatInputCommandInteraction): DiscordUser {
   return {
+    bot: interaction.user.bot,
     id: interaction.user.id,
     username: interaction.user.username,
     displayName: interaction.user.displayName,
@@ -376,7 +378,7 @@ export class DiscordJsService implements DiscordService {
 
   private async handleMessage(message: Message): Promise<void> {
     if (!this.canAcceptMessages()) return;
-    if (message.author.bot) return;
+    if (message.author.id === this.client.user?.id) return;
 
     const content = message.content.trim();
     if (!content && !hasSupportedImageAttachment(message)) return;
@@ -625,6 +627,7 @@ export class DiscordJsService implements DiscordService {
         if (!user) return undefined;
 
         return {
+          bot: user.bot,
           id: user.id,
           username: user.username,
           displayName: message.mentions.members?.get(userId)?.displayName ?? user.displayName,
