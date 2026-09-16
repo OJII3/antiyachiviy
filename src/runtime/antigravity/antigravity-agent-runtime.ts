@@ -7,20 +7,17 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import type { Logger } from "pino";
 
-import type { AgentDefinition } from "../../agents/core/agent-definition.js";
-import type { AgentFactory, AgentCreationOptions } from "../../agents/core/agent-factory.js";
-import type { AgentImage, AgentPrompt, AgentRuntime } from "../../agents/core/agent-runtime.js";
-import type { SessionMode } from "../../app/cli-options.js";
-import type {
-  DiscordSendMcpCredentials,
-  DiscordSendMcpGateway,
-} from "./discord-send-mcp-gateway.js";
+import type { AgentDefinition } from "@agents/core/agent-definition";
+import type { AgentFactory, AgentCreationOptions } from "@agents/core/agent-factory";
+import type { AgentImage, AgentPrompt, AgentRuntime } from "@agents/core/agent-runtime";
+import type { SessionMode } from "@app/cli-options";
+import type { DiscordSendMcpCredentials, DiscordSendMcpGateway } from "./discord-send-mcp-gateway";
 import {
   type AntigravitySession,
   type AntigravitySessionEvent,
   openSession,
   writeSession,
-} from "./session-store.js";
+} from "./session-store";
 
 const DEFAULT_COMMAND = "agy";
 const DEFAULT_TIMEOUT_SECONDS = 300;

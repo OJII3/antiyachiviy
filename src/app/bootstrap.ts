@@ -1,20 +1,20 @@
 import { resolve } from "node:path";
 
-import { AgentCoordinator } from "./agent-coordinator.js";
-import { parseCliOptions } from "./cli-options.js";
-import { loadConfig } from "./config.js";
-import { createLogFilePath, createLogger, flushLogger } from "./logger.js";
-import { loadPromptFile } from "./prompt.js";
-import { TaskCoordinator } from "./task-coordinator.js";
-import { DiscordAgent } from "../agents/discord/discord-agent.js";
-import { createAntigravityAgentFactory } from "../runtime/antigravity/antigravity-agent-runtime.js";
-import { DiscordSendMcpGateway } from "../runtime/antigravity/discord-send-mcp-gateway.js";
-import { createDiscordAccessPolicy } from "../modules/discord/domain/discord-access-policy.js";
-import { DiscordJsService } from "../modules/discord/infrastructure/discord-js-service.js";
-import { resolveLogDirectory, resolveWebUiConfig } from "../modules/webui/domain/webui-config.js";
-import { startWebUi } from "../modules/webui/infrastructure/elysia-webui-app.js";
-import { PinoJsonlReader } from "../modules/webui/infrastructure/pino-jsonl-reader.js";
-import { AntigravitySessionReader } from "../modules/webui/infrastructure/antigravity-session-reader.js";
+import { AgentCoordinator } from "./agent-coordinator";
+import { parseCliOptions } from "./cli-options";
+import { loadConfig } from "./config";
+import { createLogFilePath, createLogger, flushLogger } from "./logger";
+import { loadPromptFile } from "./prompt";
+import { TaskCoordinator } from "./task-coordinator";
+import { DiscordAgent } from "@agents/discord/discord-agent";
+import { createAntigravityAgentFactory } from "@runtime/antigravity/antigravity-agent-runtime";
+import { DiscordSendMcpGateway } from "@runtime/antigravity/discord-send-mcp-gateway";
+import { createDiscordAccessPolicy } from "@modules/discord/domain/discord-access-policy";
+import { DiscordJsService } from "@modules/discord/infrastructure/discord-js-service";
+import { resolveLogDirectory, resolveWebUiConfig } from "@modules/webui/domain/webui-config";
+import { startWebUi } from "@modules/webui/infrastructure/elysia-webui-app";
+import { PinoJsonlReader } from "@modules/webui/infrastructure/pino-jsonl-reader";
+import { AntigravitySessionReader } from "@modules/webui/infrastructure/antigravity-session-reader";
 
 export async function bootstrap(): Promise<void> {
   const { sessionMode } = parseCliOptions(process.argv.slice(2));

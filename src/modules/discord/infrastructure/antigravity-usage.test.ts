@@ -8,7 +8,7 @@ import {
   createAntigravityUsageProvider,
   formatWeeklyUsageActivity,
   parseWeeklyUsage,
-} from "./antigravity-usage.js";
+} from "./antigravity-usage";
 
 test("parses the remaining weekly quota and reset time", () => {
   assert.deepEqual(

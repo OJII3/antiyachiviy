@@ -1,6 +1,6 @@
-import type { PinoLog } from "../../api.js";
-import { JsonValue } from "../../components/json-value.js";
-import { levelLabel } from "../../lib/format.js";
+import type { PinoLog } from "@web/api";
+import { JsonValue } from "@web/components/json-value";
+import { levelLabel } from "@web/lib/format";
 
 export function LogDetails({ log }: { log: PinoLog }) {
   const attributes = Object.keys(log.attributes ?? {}).length > 0 ? log.attributes : null;

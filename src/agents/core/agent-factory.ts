@@ -1,5 +1,5 @@
-import type { AgentDefinition } from "./agent-definition.js";
-import type { AgentRuntime } from "./agent-runtime.js";
+import type { AgentDefinition } from "./agent-definition";
+import type { AgentRuntime } from "./agent-runtime";
 
 export interface AgentCreationOptions {
   readonly sessionKey: string;

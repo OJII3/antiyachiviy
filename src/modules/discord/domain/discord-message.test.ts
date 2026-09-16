@@ -8,7 +8,7 @@ import {
   resolveDiscordMentions,
   type DiscordRole,
   type DiscordUser,
-} from "./discord-message.js";
+} from "./discord-message";
 
 const user: DiscordUser = {
   id: "123456789012345678",

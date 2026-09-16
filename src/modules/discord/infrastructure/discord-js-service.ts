@@ -11,7 +11,7 @@ import {
 } from "discord.js";
 import type { Logger } from "pino";
 
-import type { DiscordAccessPolicy } from "../domain/discord-access-policy.js";
+import type { DiscordAccessPolicy } from "../domain/discord-access-policy";
 import {
   resolveDiscordMentions,
   type DiscordImageAttachment,
@@ -19,18 +19,18 @@ import {
   type DiscordMessageLocator,
   type DiscordReplyReference,
   type DiscordUser,
-} from "../domain/discord-message.js";
+} from "../domain/discord-message";
 import type {
   DiscordMessageHandler,
   DiscordService,
   DiscordSlashCommandHandler,
-} from "../ports/discord-service.js";
+} from "../ports/discord-service";
 import {
   createAntigravityUsageProvider,
   formatWeeklyUsageActivity,
   type WeeklyUsage,
   type WeeklyUsageProvider,
-} from "./antigravity-usage.js";
+} from "./antigravity-usage";
 
 const DISCORD_MESSAGE_LIMIT = 2_000;
 const DISCORD_IMAGE_MAX_DOWNLOAD_BYTES = 20 * 1024 * 1024;

@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 
-import { YachigravityConfigSchema } from "../src/app/config-schema.ts";
+import { YachigravityConfigSchema } from "@app/config-schema";
 
 await writeFile(
   "config/yachigravity.schema.json",

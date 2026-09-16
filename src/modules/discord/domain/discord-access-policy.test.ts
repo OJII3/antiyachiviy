@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createDiscordAccessPolicy } from "./discord-access-policy.js";
+import { createDiscordAccessPolicy } from "./discord-access-policy";
 
 const policy = createDiscordAccessPolicy({
   default: "deny",

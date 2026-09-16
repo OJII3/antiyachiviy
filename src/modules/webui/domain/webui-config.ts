@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 
-import type { YachigravityConfig } from "../../../app/config-schema.js";
+import type { YachigravityConfig } from "@app/config-schema";
 
 export const DEFAULT_WEBUI_HOST = "127.0.0.1";
 export const DEFAULT_WEBUI_PORT = 4310;

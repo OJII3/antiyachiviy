@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { parseCliOptions } from "./cli-options.js";
+import { parseCliOptions } from "./cli-options";
 
 test("resumes sessions by default", () => {
   assert.deepEqual(parseCliOptions([]), { sessionMode: "resume" });

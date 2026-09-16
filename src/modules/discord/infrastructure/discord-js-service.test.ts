@@ -2,13 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { Interaction, Message } from "discord.js";
 
-import { createDiscordAccessPolicy } from "../domain/discord-access-policy.js";
-import type { DiscordMessage } from "../domain/discord-message.js";
-import type {
-  DiscordMessageHandler,
-  DiscordSlashCommandHandler,
-} from "../ports/discord-service.js";
-import { DiscordJsService } from "./discord-js-service.js";
+import { createDiscordAccessPolicy } from "../domain/discord-access-policy";
+import type { DiscordMessage } from "../domain/discord-message";
+import type { DiscordMessageHandler, DiscordSlashCommandHandler } from "../ports/discord-service";
+import { DiscordJsService } from "./discord-js-service";
 
 type TestableDiscordJsService = {
   readonly client: {

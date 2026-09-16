@@ -1,10 +1,10 @@
 import { useCallback, useState } from "react";
 
-import { AppShell, type View } from "./components/app-shell.js";
-import { useLogs } from "./hooks/use-logs.js";
-import { useSessions } from "./hooks/use-sessions.js";
-import { LogsView } from "./features/logs/logs-view.js";
-import { SessionsView } from "./features/sessions/sessions-view.js";
+import { AppShell, type View } from "@web/components/app-shell";
+import { useLogs } from "@web/hooks/use-logs";
+import { useSessions } from "@web/hooks/use-sessions";
+import { LogsView } from "@web/features/logs/logs-view";
+import { SessionsView } from "@web/features/sessions/sessions-view";
 
 export default function App() {
   const [view, setView] = useState<View>("logs");

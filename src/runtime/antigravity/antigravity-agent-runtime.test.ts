@@ -4,13 +4,13 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import test from "node:test";
 
-import { createLogger } from "../../app/logger.js";
+import { createLogger } from "@app/logger";
 import {
   buildAntigravityArgs,
   createAntigravityAgentFactory,
   parseStreamEvent,
-} from "./antigravity-agent-runtime.js";
-import { openSession, writeSession } from "./session-store.js";
+} from "./antigravity-agent-runtime";
+import { openSession, writeSession } from "./session-store";
 
 test("drives a persistent stream-json process and stores the conversation", async () => {
   const directory = await mkdtemp(join(tmpdir(), "yachigravity-antigravity-"));
