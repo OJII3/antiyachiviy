@@ -332,13 +332,7 @@ export class AntigravityAgentRuntime implements AgentRuntime {
 
   private async saveImages(images: readonly AgentImage[]): Promise<string[]> {
     if (images.length === 0) return [];
-    const imageDirectory = resolve(
-      this.options.agentDirectory,
-      "workspaces",
-      encodeURIComponent(this.sessionKey),
-      "attachments",
-      this.session.id,
-    );
+    const imageDirectory = resolve(this.options.agentDirectory, "images", this.session.id);
     await mkdir(imageDirectory, { recursive: true });
 
     return Promise.all(

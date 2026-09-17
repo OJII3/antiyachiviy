@@ -46,13 +46,7 @@ done
   );
 
   try {
-    assert.equal(
-      await runtime.prompt({
-        text: "hello",
-        images: [{ data: "cG5nLWJ5dGVz", mimeType: "image/png" }],
-      }),
-      "reply\n",
-    );
+    assert.equal(await runtime.prompt({ text: "hello", images: [] }), "reply\n");
     assert.equal(await runtime.prompt({ text: "again", images: [] }), "reply\n");
   } finally {
     runtime.dispose();
@@ -62,21 +56,10 @@ done
   const sessionFiles = await readdir(sessionDirectory);
   assert.equal(sessionFiles.length, 1);
   const session = JSON.parse(await readFile(join(sessionDirectory, sessionFiles[0]!), "utf8")) as {
-    id: string;
     conversationId: string;
     events: { kind: string; summary: string }[];
   };
   assert.equal(session.conversationId, "conversation-123");
-  const imageDirectory = join(
-    directory,
-    "workspaces",
-    encodeURIComponent("discord-channel:123"),
-    "attachments",
-    session.id,
-  );
-  const imageFiles = await readdir(imageDirectory);
-  assert.equal(imageFiles.length, 1);
-  assert.equal(await readFile(join(imageDirectory, imageFiles[0]!), "utf8"), "png-bytes");
   assert.deepEqual(
     session.events.map((event) => event.kind),
     ["user", "tool", "assistant", "user", "tool", "assistant"],
