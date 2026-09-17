@@ -24,8 +24,6 @@ const DEFAULT_COMMAND = "agy";
 const DEFAULT_TIMEOUT_SECONDS = 300;
 const SUMMARY_MAX_LENGTH = 500;
 const DEFAULT_MCP_SERVER_PATH = resolveMcpServerPath();
-const IMAGE_INSPECTION_INSTRUCTIONS =
-  "添付画像がある場合は、返答を作成する前に各画像ファイルを必ず view_file ツールで開いて内容を確認してください。画像を確認できない場合は推測せず、その旨を返答してください。";
 
 export interface AntigravityAgentFactoryOptions {
   readonly agentDir: string;
@@ -411,14 +409,14 @@ export function parseStreamEvent(value: unknown): StreamEvent | undefined {
   return undefined;
 }
 
-export function formatPrompt(
+function formatPrompt(
   systemPrompt: string,
   text: string,
   imagePaths: readonly string[],
   hasConversation: boolean,
 ): string {
   const imageContext = imagePaths.length
-    ? `\n\n[添付画像]\n${imagePaths.map((path) => `画像ファイル: ${path}`).join("\n")}\n${IMAGE_INSPECTION_INSTRUCTIONS}`
+    ? `\n\n[添付画像]\n${imagePaths.map((path) => `画像ファイル: ${path}`).join("\n")}\n画像が必要なら、Antigravity の画像参照機能またはファイルツールで確認してください。`
     : "";
   if (hasConversation) return `${text || "(画像のみ)"}${imageContext}`;
 
