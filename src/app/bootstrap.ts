@@ -42,15 +42,15 @@ export async function bootstrap(): Promise<void> {
   const taskCoordinator = new TaskCoordinator();
   const agentDir = resolve(config.runtime.agentDir);
   const antigravityAgentFactory =
-    config.llm.backend === "cli"
-      ? createAntigravityAgentFactory({
+    config.llm.backend === "python-sdk"
+      ? createPythonAntigravityAgentFactory({
           agentDir,
           discordSendGateway,
           llm: config.llm,
           logger,
           sessionMode,
         })
-      : createPythonAntigravityAgentFactory({
+      : createAntigravityAgentFactory({
           agentDir,
           discordSendGateway,
           llm: config.llm,

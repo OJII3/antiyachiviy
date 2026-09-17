@@ -18,9 +18,9 @@ cp config/yachigravity.example.json config/yachigravity.json
 cp .env.example .env # Configure your Discord bot token in .env
 ```
 
-The default backend is the official Python Antigravity SDK. The legacy CLI backend remains
-available with `"llm": { "backend": "cli" }`. When working outside the Nix shell, run
-`uv sync --project python --frozen` before starting the bot.
+The default backend is the official Antigravity CLI. The Python SDK backend is available with
+`"llm": { "backend": "python-sdk" }`; it requires `GEMINI_API_KEY`. When working outside the
+Nix shell, run `uv sync --project python --frozen` before starting the bot.
 
 ### Start
 
@@ -39,7 +39,7 @@ You can enable the Web UI by setting `features.webui.enabled` in the config. The
 - Chat with Yachiyo on Discord.
 - Gemini models perform very well in Japanese.
 - Gemini models are bad at coding, so your Google AI Plus subscription was useless.
-- Uses the official Antigravity Python SDK as the default backend, with the CLI as a fallback.
+- Uses the official Antigravity CLI as the default backend, with the Python SDK as an optional backend.
 
 Prompts are based on [tsukumijima/YacchoGPT](https://github.com/tsukumijima/YacchoGPT).
 
