@@ -11,12 +11,14 @@ import {
 } from "./discord-message";
 
 const user: DiscordUser = {
+  bot: false,
   id: "123456789012345678",
   username: "satsuki",
   displayName: "さつき",
 };
 
 const bot: DiscordUser = {
+  bot: true,
   id: "987654321098765432",
   username: "klein",
   displayName: "クライン",

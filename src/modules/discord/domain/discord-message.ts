@@ -1,4 +1,5 @@
 export interface DiscordUser {
+  readonly bot: boolean;
   readonly id: string;
   readonly username: string;
   readonly displayName: string;
