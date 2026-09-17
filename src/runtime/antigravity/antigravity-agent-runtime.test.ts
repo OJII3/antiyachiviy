@@ -8,6 +8,7 @@ import { createLogger } from "@app/logger";
 import {
   buildAntigravityArgs,
   createAntigravityAgentFactory,
+  formatPrompt,
   parseStreamEvent,
 } from "./antigravity-agent-runtime";
 import { openSession, writeSession } from "./session-store";
@@ -163,6 +164,14 @@ test("parses only supported stream-json events", () => {
   assert.equal(parseStreamEvent({ event: "future_event" }), undefined);
   assert.equal(parseStreamEvent({ event: "result", result: "invalid" })?.event, "result");
   assert.equal(parseStreamEvent("invalid"), undefined);
+});
+
+test("instructs agy to inspect attached images with view_file", () => {
+  const prompt = formatPrompt("system", "describe this", ["/tmp/image.png"], true);
+
+  assert.match(prompt, /画像ファイル: \/tmp\/image\.png/);
+  assert.match(prompt, /必ず view_file ツールで開いて内容を確認してください/);
+  assert.match(prompt, /画像を確認できない場合は推測せず/);
 });
 
 test("resumes the latest channel session and creates a new one when requested", async () => {
