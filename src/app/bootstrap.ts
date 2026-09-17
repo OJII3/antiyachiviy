@@ -8,6 +8,7 @@ import { loadPromptFile } from "./prompt";
 import { TaskCoordinator } from "./task-coordinator";
 import { DiscordAgent } from "@agents/discord/discord-agent";
 import { createAntigravityAgentFactory } from "@runtime/antigravity/antigravity-agent-runtime";
+import { createPythonAntigravityAgentFactory } from "@runtime/antigravity/python-agent-runtime";
 import { DiscordSendMcpGateway } from "@runtime/antigravity/discord-send-mcp-gateway";
 import { createDiscordAccessPolicy } from "@modules/discord/domain/discord-access-policy";
 import { DiscordOperatingState } from "@modules/discord/domain/discord-operating-state";
@@ -40,13 +41,22 @@ export async function bootstrap(): Promise<void> {
   await discordSendGateway.start();
   const taskCoordinator = new TaskCoordinator();
   const agentDir = resolve(config.runtime.agentDir);
-  const antigravityAgentFactory = createAntigravityAgentFactory({
-    agentDir,
-    discordSendGateway,
-    llm: config.llm,
-    logger,
-    sessionMode,
-  });
+  const antigravityAgentFactory =
+    config.llm.backend === "cli"
+      ? createAntigravityAgentFactory({
+          agentDir,
+          discordSendGateway,
+          llm: config.llm,
+          logger,
+          sessionMode,
+        })
+      : createPythonAntigravityAgentFactory({
+          agentDir,
+          discordSendGateway,
+          llm: config.llm,
+          logger,
+          sessionMode,
+        });
   const agentCoordinator = new AgentCoordinator({
     createDiscordAgent: (channelId) =>
       DiscordAgent.create(antigravityAgentFactory, discordService, channelId, systemPrompt),

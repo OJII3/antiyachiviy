@@ -8,13 +8,19 @@ This project is an Antigravity port of [Klein (Pi-based)](https://github.com/oji
 
 ### Setup
 
-Install Bun and `agy` (or run `nix develop`), then authenticate with your Google account.
+Install Bun and authenticate with your Google account. `nix develop` provides Bun, Python,
+`uv`, and the Antigravity CLI, then installs the Python SDK environment automatically.
 
 ```sh
 bun install
+nix develop
 cp config/yachigravity.example.json config/yachigravity.json
 cp .env.example .env # Configure your Discord bot token in .env
 ```
+
+The default backend is the official Python Antigravity SDK. The legacy CLI backend remains
+available with `"llm": { "backend": "cli" }`. When working outside the Nix shell, run
+`uv sync --project python --frozen` before starting the bot.
 
 ### Start
 
@@ -22,18 +28,18 @@ cp .env.example .env # Configure your Discord bot token in .env
 bun start
 ```
 
-Each time you run `bun start`, it resumes the previous `agy` context. To start a new session, run `bun start -- --new` instead.
+Each time you run `bun start`, it resumes the previous Antigravity context. To start a new session, run `bun start -- --new` instead.
 
 ### Web UI
 
-You can enable the Web UI by setting `features.webui.enabled` in the config. The default address is `http://127.0.0.1:4310`, where you can view logs and `agy` sessions.
+You can enable the Web UI by setting `features.webui.enabled` in the config. The default address is `http://127.0.0.1:4310`, where you can view logs and Antigravity sessions.
 
 ## Highlights
 
 - Chat with Yachiyo on Discord.
 - Gemini models perform very well in Japanese.
 - Gemini models are bad at coding, so your Google AI Plus subscription was useless.
-- Uses the official Antigravity CLI as a backend—no third-party client required.
+- Uses the official Antigravity Python SDK as the default backend, with the CLI as a fallback.
 
 Prompts are based on [tsukumijima/YacchoGPT](https://github.com/tsukumijima/YacchoGPT).
 

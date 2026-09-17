@@ -2,10 +2,8 @@
   "$schema": "./yachigravity.schema.json",
   "version": 1,
   "llm": {
-    "command": "agy",
+    "backend": "python-sdk",
     "model": "gemini-3.7-flash-medium",
-    "effort": "medium",
-    "printTimeoutSeconds": 300,
     "dangerouslySkipPermissions": false
   },
   "runtime": {

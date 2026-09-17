@@ -11,6 +11,8 @@ export interface AntigravitySessionEvent {
   readonly content?: unknown;
 }
 
+export type AntigravityRuntimeBackend = "cli" | "python-sdk";
+
 export interface AntigravitySession {
   readonly version: 1;
   readonly id: string;
@@ -18,6 +20,7 @@ export interface AntigravitySession {
   readonly conversationId?: string;
   readonly created: string;
   readonly modified: string;
+  readonly backend?: AntigravityRuntimeBackend;
   readonly events: readonly AntigravitySessionEvent[];
 }
 
@@ -65,6 +68,21 @@ export async function writeSession(path: string, value: AntigravitySession): Pro
   const temporaryPath = `${path}.${randomUUID()}.tmp`;
   await writeFile(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
   await rename(temporaryPath, path);
+}
+
+export async function prepareSessionForBackend(
+  handle: YachigravitySessionHandle,
+  backend: AntigravityRuntimeBackend,
+): Promise<YachigravitySessionHandle> {
+  if (handle.value.backend === backend) return handle;
+
+  const value: AntigravitySession = {
+    ...handle.value,
+    backend,
+    conversationId: undefined,
+  };
+  await writeSession(handle.path, value);
+  return { path: handle.path, value };
 }
 
 export async function readSession(path: string): Promise<AntigravitySession | undefined> {
@@ -125,6 +143,9 @@ function isSession(value: unknown): value is AntigravitySession {
     typeof value.modified !== "string" ||
     !Array.isArray(value.events)
   ) {
+    return false;
+  }
+  if (value.backend !== undefined && value.backend !== "cli" && value.backend !== "python-sdk") {
     return false;
   }
   if (value.conversationId !== undefined && typeof value.conversationId !== "string") return false;
