@@ -5,6 +5,7 @@ const EffortSchema = Type.Union([
   Type.Literal("medium"),
   Type.Literal("high"),
 ]);
+const LlmBackendSchema = Type.Union([Type.Literal("python-sdk"), Type.Literal("cli")]);
 
 const DiscordIdSchema = Type.String({ minLength: 1, pattern: "^[0-9]+$" });
 const DiscordAccessSchema = Type.Union([Type.Literal("allow"), Type.Literal("deny")]);
@@ -41,6 +42,7 @@ const AgentPromptConfigurationSchema = Type.Object(
 
 const LlmConfigurationSchema = Type.Object(
   {
+    backend: Type.Optional(LlmBackendSchema),
     command: Type.Optional(Type.String({ minLength: 1 })),
     model: Type.Optional(Type.String({ minLength: 1 })),
     agent: Type.Optional(Type.String({ minLength: 1 })),
