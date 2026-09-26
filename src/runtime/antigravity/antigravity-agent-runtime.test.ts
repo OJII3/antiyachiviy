@@ -49,11 +49,10 @@ done
     assert.equal(
       await runtime.prompt({
         text: "hello",
-        images: [{ data: "cG5nLWJ5dGVz", mimeType: "image/png" }],
       }),
       "reply\n",
     );
-    assert.equal(await runtime.prompt({ text: "again", images: [] }), "reply\n");
+    assert.equal(await runtime.prompt({ text: "again" }), "reply\n");
   } finally {
     runtime.dispose();
   }
@@ -62,21 +61,10 @@ done
   const sessionFiles = await readdir(sessionDirectory);
   assert.equal(sessionFiles.length, 1);
   const session = JSON.parse(await readFile(join(sessionDirectory, sessionFiles[0]!), "utf8")) as {
-    id: string;
     conversationId: string;
     events: { kind: string; summary: string }[];
   };
   assert.equal(session.conversationId, "conversation-123");
-  const imageDirectory = join(
-    directory,
-    "workspaces",
-    encodeURIComponent("discord-channel:123"),
-    "attachments",
-    session.id,
-  );
-  const imageFiles = await readdir(imageDirectory);
-  assert.equal(imageFiles.length, 1);
-  assert.equal(await readFile(join(imageDirectory, imageFiles[0]!), "utf8"), "png-bytes");
   assert.deepEqual(
     session.events.map((event) => event.kind),
     ["user", "tool", "assistant", "user", "tool", "assistant"],
@@ -119,15 +107,16 @@ test("parses only supported stream-json events", () => {
   assert.equal(parseStreamEvent("invalid"), undefined);
 });
 
-test("instructs agy to inspect attached images with view_file", () => {
-  const prompt = formatPrompt("system", "describe this", ["/tmp/image.png"], true);
-  const initialPrompt = formatPrompt("system", "hello", [], false);
+test("adds character-focused, body-only reply instructions to the first prompt", () => {
+  const initialPrompt = formatPrompt("system", "hello", false);
+  const nextPrompt = formatPrompt("system", "again", true);
 
-  assert.match(prompt, /画像ファイル: \/tmp\/image\.png/);
-  assert.match(prompt, /必ず view_file ツールで開いて内容を確認してください/);
-  assert.match(prompt, /画像を確認できない場合は推測せず/);
   assert.match(initialPrompt, /system/);
-  assert.doesNotMatch(initialPrompt, /discord_send|Discord の中継/);
+  assert.match(initialPrompt, /このキャラクターなら何を感じ、どう話すか/);
+  assert.match(initialPrompt, /返答例/);
+  assert.match(initialPrompt, /鍵括弧で囲まず/);
+  assert.doesNotMatch(initialPrompt, /view_file|画像ファイル/);
+  assert.equal(nextPrompt, "again");
 });
 
 test("resumes the latest channel session and creates a new one when requested", async () => {

@@ -3,7 +3,6 @@ import test from "node:test";
 
 import {
   formatDiscordMessage,
-  formatDiscordReply,
   formatDiscordUser,
   resolveDiscordMentions,
   type DiscordRole,
@@ -33,7 +32,11 @@ test("formats a Discord user with display name and username", () => {
   assert.equal(formatDiscordUser(user), "さつき (@satsuki)");
 });
 
-test("formats a Discord message with its reply context", () => {
+test("does not duplicate a username used as the display name", () => {
+  assert.equal(formatDiscordUser({ ...user, displayName: user.username }), "satsuki");
+});
+
+test("formats a Discord message with reply content but without sender names or IDs", () => {
   assert.equal(
     formatDiscordMessage({
       author: user,
@@ -47,35 +50,11 @@ test("formats a Discord message with its reply context", () => {
         id: "message-123",
       },
     }),
-    "↪ クライン: 返信元 ⟦message-123⟧\nさつき (@satsuki):\n本文です",
+    "返信先のメッセージ:\n返信元\n\n本文です",
   );
 });
 
-test("does not duplicate a username used as the display name", () => {
-  assert.equal(formatDiscordUser({ ...user, displayName: user.username }), "satsuki");
-});
-
-test("formats a reply reference with a display name and message id", () => {
-  assert.equal(
-    formatDiscordReply({
-      author: user,
-      content: "元のメッセージ\nの本文",
-      id: "message-123",
-    }),
-    "↪ さつき: 元のメッセージ の本文 ⟦message-123⟧",
-  );
-});
-
-test("truncates a reply reference preview", () => {
-  const content = "あ".repeat(257);
-
-  assert.equal(
-    formatDiscordReply({ content, id: "message-123" }),
-    `↪ 不明なユーザー: ${"あ".repeat(256)}… ⟦message-123⟧`,
-  );
-});
-
-test("formats image attachment context without including image data", () => {
+test("formats message text without image attachment details", () => {
   assert.equal(
     formatDiscordMessage({
       author: user,
@@ -91,7 +70,7 @@ test("formats image attachment context without including image data", () => {
         },
       ],
     }),
-    "さつき (@satsuki):\nこれを見て\n[添付画像: sample.png]",
+    "これを見て",
   );
 });
 
@@ -111,7 +90,7 @@ test("formats an image-only message", () => {
         },
       ],
     }),
-    "さつき (@satsuki):\n(画像のみ)\n[添付画像: sample.png]",
+    "(画像のみ)",
   );
 });
 
