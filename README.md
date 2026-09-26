@@ -18,10 +18,10 @@ cp config/yachigravity.example.json config/yachigravity.json
 cp .env.example .env # Configure your Discord bot token in .env
 ```
 
-Set `TYPESAFE_API_KEY` in `.env` for Jev's reply-generation and reply-delivery decisions.
+Set `TYPESAFE_API_KEY` in `.env` for Jev's reply-generation decision.
 
-Jev decides whether a Discord message should receive a reply and whether the generated response
-should be sent. Antigravity generates Yachiyo's character response through the official CLI.
+Jev decides whether a Discord message should receive a reply. Antigravity generates Yachiyo's
+character response through the official CLI, and non-empty responses are sent.
 
 ### Start
 
@@ -38,7 +38,7 @@ You can enable the Web UI by setting `features.webui.enabled` in the config. The
 ## Highlights
 
 - Chat with Yachiyo on Discord.
-- Jev decides whether to generate a reply and whether to send the generated response.
+- Jev decides whether to generate a reply.
 - Gemini models perform very well in Japanese.
 - Gemini models are bad at coding, so your Google AI Plus subscription was useless.
 - Uses the official Antigravity CLI to generate character responses.
