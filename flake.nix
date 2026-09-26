@@ -49,13 +49,10 @@
           devShells.default = pkgs.mkShell {
             packages = [
               bun
-              pkgs.python312
-              pkgs.uv
               inputs'.llm-agents.packages.antigravity-cli
             ];
             shellHook = ''
               bun --version > .bun-version
-              uv sync --project python --frozen
             '';
           };
         };

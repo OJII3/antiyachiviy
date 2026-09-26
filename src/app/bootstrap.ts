@@ -6,7 +6,6 @@ import { createLogFilePath, createLogger, flushLogger } from "./logger";
 import { loadPromptFile } from "./prompt";
 import { TaskCoordinator } from "./task-coordinator";
 import { createAntigravityAgentFactory } from "@runtime/antigravity/antigravity-agent-runtime";
-import { createPythonAntigravityAgentFactory } from "@runtime/antigravity/python-agent-runtime";
 import { createAntigravityUsageProvider } from "@modules/discord/infrastructure/antigravity-usage";
 import { DiscordMessageCoordinator } from "@modules/discord/application/discord-message-coordinator";
 import { JevDiscordReplyPolicy } from "@modules/discord/infrastructure/jev/jev-discord-reply-policy";
@@ -42,20 +41,12 @@ export async function bootstrap(): Promise<void> {
   );
   const taskCoordinator = new TaskCoordinator();
   const agentDir = resolve(config.runtime.agentDir);
-  const characterAgentFactory =
-    config.llm.backend === "python-sdk"
-      ? createPythonAntigravityAgentFactory({
-          agentDir,
-          llm: config.llm,
-          logger,
-          sessionMode,
-        })
-      : createAntigravityAgentFactory({
-          agentDir,
-          llm: config.llm,
-          logger,
-          sessionMode,
-        });
+  const characterAgentFactory = createAntigravityAgentFactory({
+    agentDir,
+    llm: config.llm,
+    logger,
+    sessionMode,
+  });
   const discordMessageCoordinator = new DiscordMessageCoordinator({
     agentFactory: characterAgentFactory,
     discordService,

@@ -11,7 +11,7 @@ export interface AntigravitySessionEvent {
   readonly content?: unknown;
 }
 
-export type AntigravityRuntimeBackend = "cli" | "python-sdk";
+type AntigravitySessionBackend = "cli" | "python-sdk";
 
 export interface AntigravitySession {
   readonly version: 1;
@@ -20,7 +20,7 @@ export interface AntigravitySession {
   readonly conversationId?: string;
   readonly created: string;
   readonly modified: string;
-  readonly backend?: AntigravityRuntimeBackend;
+  readonly backend?: AntigravitySessionBackend;
   readonly events: readonly AntigravitySessionEvent[];
 }
 
@@ -70,15 +70,14 @@ export async function writeSession(path: string, value: AntigravitySession): Pro
   await rename(temporaryPath, path);
 }
 
-export async function prepareSessionForBackend(
+export async function prepareSessionForCli(
   handle: YachigravitySessionHandle,
-  backend: AntigravityRuntimeBackend,
 ): Promise<YachigravitySessionHandle> {
-  if (handle.value.backend === backend) return handle;
+  if (handle.value.backend === "cli") return handle;
 
   const value: AntigravitySession = {
     ...handle.value,
-    backend,
+    backend: "cli",
     conversationId: undefined,
   };
   await writeSession(handle.path, value);

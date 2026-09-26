@@ -8,8 +8,8 @@ This project is an Antigravity port of [Klein (Pi-based)](https://github.com/oji
 
 ### Setup
 
-Install Bun and authenticate with your Google account. `nix develop` provides Bun, Python,
-`uv`, and the Antigravity CLI, then installs the Python SDK environment automatically.
+Install Bun and authenticate with your Google account. `nix develop` provides Bun and the
+Antigravity CLI.
 
 ```sh
 bun install
@@ -21,10 +21,7 @@ cp .env.example .env # Configure your Discord bot token in .env
 Set `TYPESAFE_API_KEY` in `.env` for Jev's reply-generation and reply-delivery decisions.
 
 Jev decides whether a Discord message should receive a reply and whether the generated response
-should be sent. Antigravity only generates Yachiyo's character response. The default character
-backend is the official Antigravity CLI. The Python SDK backend is available with
-`"llm": { "backend": "python-sdk" }`; it requires `GEMINI_API_KEY`. When working outside the
-Nix shell, run `uv sync --project python --frozen` before starting the bot.
+should be sent. Antigravity generates Yachiyo's character response through the official CLI.
 
 ### Start
 
@@ -44,7 +41,7 @@ You can enable the Web UI by setting `features.webui.enabled` in the config. The
 - Jev decides whether to generate a reply and whether to send the generated response.
 - Gemini models perform very well in Japanese.
 - Gemini models are bad at coding, so your Google AI Plus subscription was useless.
-- Uses the official Antigravity CLI as the default backend, with the Python SDK as an optional backend.
+- Uses the official Antigravity CLI to generate character responses.
 
 Prompts are based on [tsukumijima/YacchoGPT](https://github.com/tsukumijima/YacchoGPT).
 
