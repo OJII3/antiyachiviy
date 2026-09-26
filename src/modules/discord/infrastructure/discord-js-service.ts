@@ -558,6 +558,9 @@ export class DiscordJsService implements DiscordService {
       guildId: message.guildId ?? undefined,
       id: message.id,
       images: [],
+      mentionsYachiyo: this.client.user
+        ? message.mentions.users.has(this.client.user.id)
+        : false,
       parentChannelId: thread?.parentId ?? undefined,
       threadId: thread?.id,
     };

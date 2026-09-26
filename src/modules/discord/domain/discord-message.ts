@@ -30,6 +30,7 @@ export interface DiscordMessage {
   readonly threadId?: string;
   readonly author: DiscordUser;
   readonly content: string;
+  readonly mentionsYachiyo: boolean;
   readonly id: string;
   readonly images: readonly DiscordImageAttachment[];
   readonly replyTo?: DiscordReplyReference;
