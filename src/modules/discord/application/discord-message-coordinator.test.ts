@@ -15,6 +15,7 @@ const message: DiscordMessage = {
   content: "こんにちは",
   id: "message-1",
   images: [],
+  mentionsYachiyo: false,
 };
 
 test("generates and sends after Jev approves generation", async () => {

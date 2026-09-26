@@ -44,6 +44,7 @@ test("formats a Discord message with reply content but without sender names or I
       content: "本文です",
       id: "message-456",
       images: [],
+      mentionsYachiyo: false,
       replyTo: {
         author: bot,
         content: "返信元",
@@ -61,6 +62,7 @@ test("formats message text without image attachment details", () => {
       channelId: "channel-123",
       content: "これを見て",
       id: "message-456",
+      mentionsYachiyo: false,
       images: [
         {
           data: "c2VjcmV0",
@@ -81,6 +83,7 @@ test("formats an image-only message", () => {
       channelId: "channel-123",
       content: "",
       id: "message-456",
+      mentionsYachiyo: false,
       images: [
         {
           data: "c2VjcmV0",
