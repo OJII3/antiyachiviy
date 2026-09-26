@@ -83,70 +83,6 @@ done
   );
 });
 
-test("does not duplicate a message sent through discord_send", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "yachigravity-discord-send-"));
-  const command = join(directory, "fake-agy");
-  await writeFile(
-    command,
-    `#!/bin/sh
-printf '%s\\n' '{"event":"init","conversation_id":"conversation-123"}'
-while IFS= read -r _line; do
-  printf '%s\\n' '{"event":"step_update","step_update":{"step_type":"tool","tool_name":"mcp__yachigravity-discord__discord_send","tool_info":{"output":"sent"}}}'
-  printf '%s\\n' '{"event":"result","result":{"conversation_id":"conversation-123","status":"SUCCESS","response":"duplicate\\n"}}'
-done
-`,
-    "utf8",
-  );
-  await chmod(command, 0o755);
-
-  const logger = createLogger({ level: "silent" });
-  const factory = createAntigravityAgentFactory({
-    agentDir: directory,
-    discordSendGateway: {
-      registerChannel(channelId) {
-        assert.equal(channelId, "123");
-        return { endpoint: "http://127.0.0.1:1/discord-send", token: "token" };
-      },
-    },
-    llm: {
-      command,
-      printTimeoutSeconds: 30,
-      dangerouslySkipPermissions: false,
-    },
-    logger,
-    mcpServerPath: "/tmp/discord-send-mcp",
-    sessionMode: "resume",
-  });
-  const runtime = await factory.create(
-    { systemPrompt: "system" },
-    { sessionKey: "discord-channel:123" },
-  );
-
-  try {
-    assert.equal(await runtime.prompt({ text: "hello", images: [] }), "");
-  } finally {
-    runtime.dispose();
-  }
-
-  const config = JSON.parse(
-    await readFile(
-      join(
-        directory,
-        "workspaces",
-        encodeURIComponent("discord-channel:123"),
-        ".agents",
-        "mcp_config.json",
-      ),
-      "utf8",
-    ),
-  ) as { mcpServers: Record<string, { args: string[]; env: Record<string, string> }> };
-  assert.equal(config.mcpServers["yachigravity-discord"]?.args[0], "/tmp/discord-send-mcp");
-  assert.equal(
-    config.mcpServers["yachigravity-discord"]?.env.YACHIGRAVITY_DISCORD_SEND_TOKEN,
-    "token",
-  );
-});
-
 test("builds headless stream-json arguments", () => {
   assert.deepEqual(
     buildAntigravityArgs({
@@ -185,10 +121,13 @@ test("parses only supported stream-json events", () => {
 
 test("instructs agy to inspect attached images with view_file", () => {
   const prompt = formatPrompt("system", "describe this", ["/tmp/image.png"], true);
+  const initialPrompt = formatPrompt("system", "hello", [], false);
 
   assert.match(prompt, /画像ファイル: \/tmp\/image\.png/);
   assert.match(prompt, /必ず view_file ツールで開いて内容を確認してください/);
   assert.match(prompt, /画像を確認できない場合は推測せず/);
+  assert.match(initialPrompt, /system/);
+  assert.doesNotMatch(initialPrompt, /discord_send|Discord の中継/);
 });
 
 test("resumes the latest channel session and creates a new one when requested", async () => {

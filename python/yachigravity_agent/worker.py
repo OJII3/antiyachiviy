@@ -6,16 +6,12 @@ import asyncio
 import base64
 import enum
 import json
-import os
 import sys
 from typing import Any
 
 from google.antigravity import Agent, CapabilitiesConfig, LocalAgentConfig
 from google.antigravity.hooks.policy import allow
-from google.antigravity.types import Image, McpStdioServer, Text, ToolCall, ToolResult
-
-MCP_ENDPOINT_ENV = "YACHIGRAVITY_DISCORD_SEND_ENDPOINT"
-MCP_TOKEN_ENV = "YACHIGRAVITY_DISCORD_SEND_TOKEN"
+from google.antigravity.types import Image, Text, ToolCall, ToolResult
 
 
 def main() -> None:
@@ -86,17 +82,13 @@ async def read_line() -> str:
 
 
 def create_agent_config(configuration: dict[str, Any]) -> LocalAgentConfig:
-    mcp_server = create_mcp_server(configuration)
     policies = []
-    if mcp_server is not None:
-        policies.append(allow(mcp_server, ["discord_send"]))
     if configuration.get("dangerouslySkipPermissions"):
         policies.append(allow("*"))
 
     kwargs: dict[str, Any] = {
         "system_instructions": required_string(configuration, "systemPrompt"),
         "capabilities": CapabilitiesConfig() if configuration.get("dangerouslySkipPermissions") else None,
-        "mcp_servers": [mcp_server] if mcp_server is not None else None,
         "policies": policies or None,
         "save_dir": required_string(configuration, "saveDir"),
         "conversation_id": optional_string(configuration, "conversationId"),
@@ -104,27 +96,6 @@ def create_agent_config(configuration: dict[str, Any]) -> LocalAgentConfig:
         "model": optional_string(configuration, "model"),
     }
     return LocalAgentConfig(**kwargs)
-
-
-def create_mcp_server(configuration: dict[str, Any]) -> McpStdioServer | None:
-    command = optional_string(configuration, "mcpCommand")
-    args = configuration.get("mcpArgs", [])
-    if command is None:
-        return None
-    if not isinstance(args, list) or not all(isinstance(value, str) for value in args):
-        raise ValueError("mcpArgs must be a list of strings")
-
-    env = {
-        name: os.environ[name]
-        for name in (MCP_ENDPOINT_ENV, MCP_TOKEN_ENV)
-        if name in os.environ
-    }
-    return McpStdioServer(
-        name="yachigravity-discord",
-        command=command,
-        args=args,
-        env=env,
-    )
 
 
 async def handle_request(agent: Agent, request: Any) -> str:

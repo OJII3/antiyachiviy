@@ -1,16 +1,10 @@
 import { spawn } from "node:child_process";
 
+import type { WeeklyUsage } from "../domain/weekly-usage";
+import type { WeeklyUsageProvider } from "../ports/weekly-usage-provider";
+
 const USAGE_TIMEOUT_MS = 30_000;
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
-
-export interface WeeklyUsage {
-  readonly remainingPercentage: number;
-  readonly resetInDays?: number;
-}
-
-export interface WeeklyUsageProvider {
-  getWeeklyUsage(): Promise<WeeklyUsage>;
-}
 
 export function createAntigravityUsageProvider(command: string): WeeklyUsageProvider {
   return {
@@ -63,12 +57,6 @@ function getResetInSeconds(quota: WeeklyQuotaRecord): number | undefined {
 
   const resetAt = Date.parse(quota.reset_time);
   return Number.isFinite(resetAt) ? (resetAt - Date.now()) / 1_000 : undefined;
-}
-
-export function formatWeeklyUsageActivity(usage: WeeklyUsage | undefined): string {
-  const percentage = usage ? `${usage.remainingPercentage}` : "--";
-  const resetInDays = usage?.resetInDays === undefined ? "--" : `${usage.resetInDays}`;
-  return `${percentage}%/week (reset in ${resetInDays} days)`;
 }
 
 async function runUsageCommand(command: string): Promise<string> {

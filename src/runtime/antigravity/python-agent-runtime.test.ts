@@ -20,8 +20,8 @@ printf '%s' "$configure" > "${configurationPath}"
 printf '%s\\n' '{"event":"init","conversation_id":"python-conversation"}'
 while IFS= read -r line; do
   printf '%s' "$line" > "${promptPath}"
-  printf '%s\\n' '{"event":"step_update","step_update":{"step_type":"tool","tool_name":"discord_send","tool_info":{"output":"sent"}}}'
-  printf '%s\\n' '{"event":"result","result":{"conversation_id":"python-conversation","status":"SUCCESS","response":"duplicate"}}'
+  printf '%s\\n' '{"event":"step_update","step_update":{"step_type":"tool","tool_name":"view_file","tool_info":{"output":"image inspected"}}}'
+  printf '%s\\n' '{"event":"result","result":{"conversation_id":"python-conversation","status":"SUCCESS","response":"response"}}'
 done
 `,
     "utf8",
@@ -30,18 +30,11 @@ done
 
   const factory = createPythonAntigravityAgentFactory({
     agentDir: directory,
-    discordSendGateway: {
-      registerChannel(channelId) {
-        assert.equal(channelId, "123");
-        return { endpoint: "http://127.0.0.1:1/discord-send", token: "token" };
-      },
-    },
     llm: {
       dangerouslySkipPermissions: false,
       model: "gemini-test",
     },
     logger: createLogger({ level: "silent" }),
-    mcpServerPath: "/tmp/discord-send-mcp",
     pythonCommand: command,
     pythonProjectDirectory: directory,
     sessionMode: "resume",
@@ -57,7 +50,7 @@ done
         text: "この画像を見て",
         images: [{ data: "cG5nLWJ5dGVz", mimeType: "image/png" }],
       }),
-      "",
+      "response",
     );
   } finally {
     runtime.dispose();
@@ -66,16 +59,11 @@ done
   const configuration = JSON.parse(await readFile(configurationPath, "utf8")) as {
     conversationId?: string;
     model?: string;
-    mcpArgs?: string[];
-    mcpCommand?: string;
     systemPrompt: string;
     workspace: string;
   };
-  assert.match(configuration.systemPrompt, /^system\n\n/);
-  assert.match(configuration.systemPrompt, /discord_send/);
+  assert.equal(configuration.systemPrompt, "system");
   assert.equal(configuration.model, "gemini-test");
-  assert.equal(configuration.mcpCommand, process.execPath);
-  assert.deepEqual(configuration.mcpArgs, ["/tmp/discord-send-mcp"]);
   assert.match(configuration.workspace, /workspaces\/discord-channel%3A123$/);
 
   const prompt = JSON.parse(await readFile(promptPath, "utf8")) as {

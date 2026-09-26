@@ -4,11 +4,8 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import test from "node:test";
 
-import {
-  createAntigravityUsageProvider,
-  formatWeeklyUsageActivity,
-  parseWeeklyUsage,
-} from "./antigravity-usage";
+import { createAntigravityUsageProvider, parseWeeklyUsage } from "./antigravity-usage";
+import { formatWeeklyUsageActivity } from "../domain/weekly-usage";
 
 test("parses the remaining weekly quota and reset time", () => {
   assert.deepEqual(
