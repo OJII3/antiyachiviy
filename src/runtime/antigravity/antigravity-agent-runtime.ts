@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { createInterface } from "node:readline";
-import { join, resolve } from "node:path";
+import { resolve } from "node:path";
 import { mkdir } from "node:fs/promises";
 import type { Logger } from "pino";
 
