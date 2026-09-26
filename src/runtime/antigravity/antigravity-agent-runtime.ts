@@ -367,11 +367,7 @@ export function parseStreamEvent(value: unknown): StreamEvent | undefined {
   return undefined;
 }
 
-export function formatPrompt(
-  systemPrompt: string,
-  text: string,
-  hasConversation: boolean,
-): string {
+export function formatPrompt(systemPrompt: string, text: string, hasConversation: boolean): string {
   if (hasConversation) return text || "(画像のみ)";
 
   return (
