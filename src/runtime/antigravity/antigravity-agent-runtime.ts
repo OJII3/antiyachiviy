@@ -1,13 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { createInterface } from "node:readline";
-import { join, resolve } from "node:path";
-import { mkdir, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { mkdir } from "node:fs/promises";
 import type { Logger } from "pino";
 
 import type { AgentDefinition } from "@agents/core/agent-definition";
 import type { AgentFactory, AgentCreationOptions } from "@agents/core/agent-factory";
-import type { AgentImage, AgentPrompt, AgentRuntime } from "@agents/core/agent-runtime";
+import type { AgentPrompt, AgentRuntime } from "@agents/core/agent-runtime";
 import type { SessionMode } from "@app/cli-options";
 import {
   type AntigravitySession,
@@ -20,8 +20,13 @@ import {
 const DEFAULT_COMMAND = "agy";
 const DEFAULT_TIMEOUT_SECONDS = 300;
 const SUMMARY_MAX_LENGTH = 500;
-const IMAGE_INSPECTION_INSTRUCTIONS =
-  "添付画像がある場合は、返答を作成する前に各画像ファイルを必ず view_file ツールで開いて内容を確認してください。画像を確認できない場合は推測せず、その旨を返答してください。";
+const DISCORD_REPLY_INSTRUCTIONS = [
+  "Discord のメッセージには、発言者の名前や ID は含めません。返信の場合は返信先の本文も示します。",
+  "一般知識や検索で得た情報を説明することを主目的にせず、このキャラクターなら何を感じ、どう話すかを主軸に返答してください。情報提供が必要な場合も、説明に終始せず、キャラクターらしい受け止め方や言い回しを優先してください。",
+  "返答例（メッセージ: 今日はちょっと疲れた〜）",
+  "おぉ〜、おつかれさまだよ〜。今日はもう、ゆるっと休んじゃお。明日になればまた、よ〜し！って動けるからさ〜。",
+  "返答は本文だけにしてください。鍵括弧で囲まず、前置き、説明文、見出しを付けないでください。",
+].join("\n");
 
 export interface AntigravityAgentFactoryOptions {
   readonly agentDir: string;
@@ -131,11 +136,9 @@ export class AntigravityAgentRuntime implements AgentRuntime {
   private async runPrompt(prompt: AgentPrompt): Promise<string> {
     if (this.disposed) throw new Error("Antigravity agent was disposed");
 
-    const imagePaths = await this.saveImages(prompt.images);
     const content = formatPrompt(
       this.systemPrompt,
       prompt.text,
-      imagePaths,
       this.session.conversationId !== undefined,
     );
     const userEvent: AntigravitySessionEvent = {
@@ -302,29 +305,6 @@ export class AntigravityAgentRuntime implements AgentRuntime {
     return workspaceDirectory;
   }
 
-  private async saveImages(images: readonly AgentImage[]): Promise<string[]> {
-    if (images.length === 0) return [];
-    const imageDirectory = resolve(
-      this.options.agentDirectory,
-      "workspaces",
-      encodeURIComponent(this.sessionKey),
-      "attachments",
-      this.session.id,
-    );
-    await mkdir(imageDirectory, { recursive: true });
-
-    return Promise.all(
-      images.map(async (image, index) => {
-        const path = join(
-          imageDirectory,
-          `${index + 1}-${randomUUID()}${extensionFor(image.mimeType)}`,
-        );
-        await writeFile(path, Buffer.from(image.data, "base64"));
-        return path;
-      }),
-    );
-  }
-
   private failPending(error: Error): void {
     const pending = this.pending;
     if (!pending) return;
@@ -387,20 +367,12 @@ export function parseStreamEvent(value: unknown): StreamEvent | undefined {
   return undefined;
 }
 
-export function formatPrompt(
-  systemPrompt: string,
-  text: string,
-  imagePaths: readonly string[],
-  hasConversation: boolean,
-): string {
-  const imageContext = imagePaths.length
-    ? `\n\n[添付画像]\n${imagePaths.map((path) => `画像ファイル: ${path}`).join("\n")}\n${IMAGE_INSPECTION_INSTRUCTIONS}`
-    : "";
-  if (hasConversation) return `${text || "(画像のみ)"}${imageContext}`;
+export function formatPrompt(systemPrompt: string, text: string, hasConversation: boolean): string {
+  if (hasConversation) return text || "(画像のみ)";
 
   return (
-    `<yachigravity-instructions>\n${systemPrompt}\n\n` +
-    `</yachigravity-instructions>\n\n${text || "(画像のみ)"}${imageContext}`
+    `<yachigravity-instructions>\n${systemPrompt}\n\n${DISCORD_REPLY_INSTRUCTIONS}\n` +
+    `</yachigravity-instructions>\n\n${text || "(画像のみ)"}`
   );
 }
 
@@ -422,11 +394,6 @@ function sanitizeValue(value: unknown): unknown {
       key === "output" ? truncate(String(nested), SUMMARY_MAX_LENGTH) : sanitizeValue(nested),
     ]),
   );
-}
-
-function extensionFor(mimeType: string): string {
-  const extension = mimeType.split("/", 2)[1]?.replace(/[^a-z0-9]/giu, "");
-  return extension ? `.${extension}` : ".bin";
 }
 
 function truncate(value: string, maxLength: number): string {

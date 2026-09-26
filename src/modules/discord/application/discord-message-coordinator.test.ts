@@ -26,7 +26,7 @@ test("generates and sends only after Jev approves both decisions", async () => {
       assert.equal(options.sessionKey, "discord-channel:channel-1");
       return {
         async prompt(prompt) {
-          assert.equal(prompt.text, "さつき (@satsuki):\nこんにちは");
+          assert.equal(prompt.text, "こんにちは");
           return "返答です";
         },
         dispose() {},

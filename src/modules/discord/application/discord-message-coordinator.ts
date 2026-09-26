@@ -81,7 +81,6 @@ export class DiscordMessageCoordinator {
       const agent = await this.getAgent(message.channelId);
       const response = await agent.prompt({
         text: formatDiscordMessage(message),
-        images: message.images.map(({ data, mimeType }) => ({ data, mimeType })),
       });
       const candidate = response.trim();
       if (!candidate) return;
