@@ -31,18 +31,13 @@ import type {
   DiscordService,
   DiscordSlashCommandHandler,
 } from "../ports/discord-service";
-import {
-  createAntigravityUsageProvider,
-  formatWeeklyUsageActivity,
-  type WeeklyUsage,
-  type WeeklyUsageProvider,
-} from "./antigravity-usage";
+import { formatWeeklyUsageActivity, type WeeklyUsage } from "../domain/weekly-usage";
+import type { WeeklyUsageProvider } from "../ports/weekly-usage-provider";
 
 const DISCORD_MESSAGE_LIMIT = 2_000;
 const DISCORD_IMAGE_MAX_DOWNLOAD_BYTES = 20 * 1024 * 1024;
 const DISCORD_IMAGE_FETCH_TIMEOUT_MS = 15_000;
 const DISCORD_IMAGE_MIME_TYPES = new Set(["image/gif", "image/jpeg", "image/png", "image/webp"]);
-const DEFAULT_ANTIGRAVITY_COMMAND = "agy";
 const DEFAULT_WEEKLY_USAGE_REFRESH_INTERVAL_MS = 5 * 60 * 1_000;
 const OPERATING_MODE_COMMANDS: readonly ApplicationCommandDataResolvable[] = [
   {
@@ -60,7 +55,6 @@ const OPERATING_MODE_COMMANDS: readonly ApplicationCommandDataResolvable[] = [
 ];
 
 export interface DiscordJsServiceOptions {
-  readonly antigravityCommand?: string;
   readonly operatingState?: DiscordOperatingState;
   readonly weeklyUsageProvider?: WeeklyUsageProvider;
   readonly weeklyUsageRefreshIntervalMs?: number;
@@ -172,7 +166,7 @@ export class DiscordJsService implements DiscordService {
   private messageListener?: (message: Message) => void;
   private acceptingMessages = false;
   private readonly logger?: Logger;
-  private readonly weeklyUsageProvider: WeeklyUsageProvider;
+  private readonly weeklyUsageProvider?: WeeklyUsageProvider;
   private readonly weeklyUsageRefreshIntervalMs: number;
   private readonly operatingState: DiscordOperatingState;
   private weeklyUsageRefreshTimer?: ReturnType<typeof setInterval>;
@@ -186,9 +180,7 @@ export class DiscordJsService implements DiscordService {
     options: DiscordJsServiceOptions = {},
   ) {
     this.logger = logger?.child({ component: "discord-service" });
-    this.weeklyUsageProvider =
-      options.weeklyUsageProvider ??
-      createAntigravityUsageProvider(options.antigravityCommand ?? DEFAULT_ANTIGRAVITY_COMMAND);
+    this.weeklyUsageProvider = options.weeklyUsageProvider;
     this.weeklyUsageRefreshIntervalMs =
       options.weeklyUsageRefreshIntervalMs ?? DEFAULT_WEEKLY_USAGE_REFRESH_INTERVAL_MS;
     this.operatingState = options.operatingState ?? new DiscordOperatingState();
@@ -333,6 +325,8 @@ export class DiscordJsService implements DiscordService {
     this.stopWeeklyUsageRefresh();
     this.weeklyUsageRefreshEnabled = true;
     this.setWeeklyUsageActivity(undefined);
+    if (!this.weeklyUsageProvider) return;
+
     void this.refreshWeeklyUsage();
     this.weeklyUsageRefreshTimer = setInterval(() => {
       void this.refreshWeeklyUsage();
@@ -348,9 +342,11 @@ export class DiscordJsService implements DiscordService {
   }
 
   private refreshWeeklyUsage(): Promise<void> {
+    const provider = this.weeklyUsageProvider;
+    if (!provider) return Promise.resolve();
     if (this.weeklyUsageRefreshInFlight) return this.weeklyUsageRefreshInFlight;
 
-    const refresh = this.weeklyUsageProvider
+    const refresh = provider
       .getWeeklyUsage()
       .then((usage) => {
         if (this.weeklyUsageRefreshEnabled) this.setWeeklyUsageActivity(usage);

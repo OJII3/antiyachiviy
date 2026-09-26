@@ -1,12 +1,12 @@
 {
   "name": "yachigravity",
   "version": "0.1.0",
-  "description": "Discord communication agent powered by the Antigravity CLI.",
+  "description": "Discord bot with Jev reply decisions and Antigravity character responses.",
   "license": "MIT",
   "author": "OJII3",
   "type": "module",
   "scripts": {
-    "build": "bun run build:web && bun build --target=bun --production --outfile=dist/yachigravity src/app/bootstrap.ts && bun build --target=bun --production --outfile=dist/discord-send-mcp src/runtime/antigravity/discord-send-mcp.ts",
+    "build": "bun run build:web && bun build --target=bun --production --outfile=dist/yachigravity src/app/bootstrap.ts",
     "build:web": "bun build web/index.html --outdir dist/web --minify",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
@@ -20,6 +20,7 @@
   "dependencies": {
     "@elysia/eden": "^1.4.10",
     "@elysia/static": "^1.4.11",
+    "@typesafe-ai/sdk": "^0.6.0",
     "discord.js": "^14.27.0",
     "elysia": "^1.4.30",
     "ky": "^2.1.0",

@@ -30,13 +30,13 @@ class WorkerPromptTest(unittest.TestCase):
 
 
 class WorkerResponseTest(unittest.IsolatedAsyncioTestCase):
-    async def test_emits_tool_events_and_returns_text(self) -> None:
+    async def test_emits_generic_tool_events_and_returns_text(self) -> None:
         class FakeResponse:
             @property
             def chunks(self):
                 async def generate():
-                    yield ToolCall(name="discord_send", args={"content": "sent"}, id="call-1")
-                    yield ToolResult(name="discord_send", id="call-1", result="ok")
+                    yield ToolCall(name="view_file", args={"path": "image.png"}, id="call-1")
+                    yield ToolResult(name="view_file", id="call-1", result="image contents")
                     yield Text(step_index=1, text="done")
 
                 return generate()
@@ -48,8 +48,8 @@ class WorkerResponseTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response, "done")
         event = json.loads(output.getvalue())
         self.assertEqual(event["event"], "step_update")
-        self.assertEqual(event["step_update"]["tool_name"], "discord_send")
-        self.assertEqual(event["step_update"]["tool_info"]["parameters"], {"content": "sent"})
+        self.assertEqual(event["step_update"]["tool_name"], "view_file")
+        self.assertEqual(event["step_update"]["tool_info"]["parameters"], {"path": "image.png"})
 
 
 if __name__ == "__main__":

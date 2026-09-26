@@ -1,15 +1,15 @@
 import { resolve } from "node:path";
 
-import { AgentCoordinator } from "./agent-coordinator";
 import { parseCliOptions } from "./cli-options";
 import { loadConfig } from "./config";
 import { createLogFilePath, createLogger, flushLogger } from "./logger";
 import { loadPromptFile } from "./prompt";
 import { TaskCoordinator } from "./task-coordinator";
-import { DiscordAgent } from "@agents/discord/discord-agent";
 import { createAntigravityAgentFactory } from "@runtime/antigravity/antigravity-agent-runtime";
 import { createPythonAntigravityAgentFactory } from "@runtime/antigravity/python-agent-runtime";
-import { DiscordSendMcpGateway } from "@runtime/antigravity/discord-send-mcp-gateway";
+import { createAntigravityUsageProvider } from "@modules/discord/infrastructure/antigravity-usage";
+import { DiscordMessageCoordinator } from "@modules/discord/application/discord-message-coordinator";
+import { JevDiscordReplyPolicy } from "@modules/discord/infrastructure/jev/jev-discord-reply-policy";
 import { createDiscordAccessPolicy } from "@modules/discord/domain/discord-access-policy";
 import { DiscordOperatingState } from "@modules/discord/domain/discord-operating-state";
 import { DiscordJsService } from "@modules/discord/infrastructure/discord-js-service";
@@ -35,35 +35,34 @@ export async function bootstrap(): Promise<void> {
     token,
     createDiscordAccessPolicy(config.discord.access),
     logger,
-    { antigravityCommand: config.llm.command, operatingState: discordOperatingState },
+    {
+      operatingState: discordOperatingState,
+      weeklyUsageProvider: createAntigravityUsageProvider(config.llm.command ?? "agy"),
+    },
   );
-  const discordSendGateway = new DiscordSendMcpGateway(discordService, logger);
-  await discordSendGateway.start();
   const taskCoordinator = new TaskCoordinator();
   const agentDir = resolve(config.runtime.agentDir);
-  const antigravityAgentFactory =
+  const characterAgentFactory =
     config.llm.backend === "python-sdk"
       ? createPythonAntigravityAgentFactory({
           agentDir,
-          discordSendGateway,
           llm: config.llm,
           logger,
           sessionMode,
         })
       : createAntigravityAgentFactory({
           agentDir,
-          discordSendGateway,
           llm: config.llm,
           logger,
           sessionMode,
         });
-  const agentCoordinator = new AgentCoordinator({
-    createDiscordAgent: (channelId) =>
-      DiscordAgent.create(antigravityAgentFactory, discordService, channelId, systemPrompt),
+  const discordMessageCoordinator = new DiscordMessageCoordinator({
+    agentFactory: characterAgentFactory,
     discordService,
     logger,
     operatingState: discordOperatingState,
-    taskCoordinator,
+    replyPolicy: new JevDiscordReplyPolicy(),
+    systemPrompt,
   });
   const webUiConfig = resolveWebUiConfig(config);
   const webUi = webUiConfig.enabled
@@ -86,8 +85,7 @@ export async function bootstrap(): Promise<void> {
     await webUi?.stop();
     discordService.stopAccepting();
     await taskCoordinator.waitForCompletion();
-    await agentCoordinator.dispose();
-    await discordSendGateway.stop();
+    await discordMessageCoordinator.dispose();
     await discordService.stop();
     logger.info({ event: "shutdown_completed" }, "Shutdown complete");
     flushLogger(logger);
@@ -100,7 +98,9 @@ export async function bootstrap(): Promise<void> {
     void shutdown("SIGTERM");
   });
 
-  await discordService.start((message) => agentCoordinator.handleDiscordMessage(message));
+  await discordService.start((message) =>
+    taskCoordinator.run(() => discordMessageCoordinator.handleDiscordMessage(message)),
+  );
 }
 
 try {
