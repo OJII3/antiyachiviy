@@ -85,11 +85,6 @@ export class DiscordMessageCoordinator {
       const candidate = response.trim();
       if (!candidate) return;
 
-      if (!(await this.dependencies.replyPolicy.shouldSendReply(message, candidate))) {
-        logger.debug({ event: "discord_reply_send_skipped" }, "Discarded generated Discord reply");
-        return;
-      }
-
       await this.dependencies.discordService.sendMessage(message.channelId, candidate);
       logger.debug(
         {

@@ -17,7 +17,7 @@ const message: DiscordMessage = {
   images: [],
 };
 
-test("generates and sends only after Jev approves both decisions", async () => {
+test("generates and sends after Jev approves generation", async () => {
   const decisions: string[] = [];
   const sent: string[] = [];
   const agentFactory: AgentFactory = {
@@ -43,10 +43,6 @@ test("generates and sends only after Jev approves both decisions", async () => {
       decisions.push("generate");
       return true;
     },
-    async shouldSendReply(_message, response) {
-      decisions.push(`send:${response}`);
-      return true;
-    },
   };
   const coordinator = new DiscordMessageCoordinator({
     agentFactory,
@@ -59,7 +55,7 @@ test("generates and sends only after Jev approves both decisions", async () => {
 
   await coordinator.handleDiscordMessage(message);
 
-  assert.deepEqual(decisions, ["generate", "send:返答です"]);
+  assert.deepEqual(decisions, ["generate"]);
   assert.deepEqual(sent, ["返答です"]);
   await coordinator.dispose();
 });
@@ -73,9 +69,6 @@ test("does not create a character agent when Jev declines generation", async () 
   const replyPolicy: DiscordReplyPolicy = {
     async shouldGenerateReply() {
       return false;
-    },
-    async shouldSendReply() {
-      assert.fail("send decision should not run without a generated response");
     },
   };
   const coordinator = new DiscordMessageCoordinator({
@@ -91,7 +84,7 @@ test("does not create a character agent when Jev declines generation", async () 
   await coordinator.dispose();
 });
 
-test("discards a generated response when Jev declines delivery", async () => {
+test("sends a non-empty generated response without a second Jev decision", async () => {
   const sent: string[] = [];
   const agentFactory: AgentFactory = {
     async create() {
@@ -106,9 +99,6 @@ test("discards a generated response when Jev declines delivery", async () => {
   const replyPolicy: DiscordReplyPolicy = {
     async shouldGenerateReply() {
       return true;
-    },
-    async shouldSendReply() {
-      return false;
     },
   };
   const coordinator = new DiscordMessageCoordinator({
@@ -126,6 +116,6 @@ test("discards a generated response when Jev declines delivery", async () => {
 
   await coordinator.handleDiscordMessage(message);
 
-  assert.deepEqual(sent, []);
+  assert.deepEqual(sent, ["candidate"]);
   await coordinator.dispose();
 });
