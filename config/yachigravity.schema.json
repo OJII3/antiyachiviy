@@ -14,16 +14,8 @@
       "type": "object",
       "properties": {
         "backend": {
-          "anyOf": [
-            {
-              "type": "string",
-              "const": "python-sdk"
-            },
-            {
-              "type": "string",
-              "const": "cli"
-            }
-          ]
+          "type": "string",
+          "const": "cli"
         },
         "command": {
           "type": "string",

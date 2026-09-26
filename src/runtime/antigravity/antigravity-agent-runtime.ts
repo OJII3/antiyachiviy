@@ -13,7 +13,7 @@ import {
   type AntigravitySession,
   type AntigravitySessionEvent,
   openSession,
-  prepareSessionForBackend,
+  prepareSessionForCli,
   writeSession,
 } from "./session-store";
 
@@ -68,13 +68,12 @@ export function createAntigravityAgentFactory({
       definition: AgentDefinition,
       options: AgentCreationOptions,
     ): Promise<AgentRuntime> {
-      const session = await prepareSessionForBackend(
+      const session = await prepareSessionForCli(
         await openSession({
           agentDirectory: agentDir,
           mode: sessionMode,
           sessionKey: options.sessionKey,
         }),
-        "cli",
       );
       return new AntigravityAgentRuntime(
         session.path,
